@@ -1,4 +1,5 @@
 #include <boost/program_options.hpp>
+#include <opencv2/opencv.hpp>
 #include <thread>
 #include <iostream>
 
@@ -28,7 +29,8 @@ int main(int argc, char** argv)
     make_integral_images(conf);
 }
 
-void make_integral_images(Config& conf) {
+void make_integral_images(Config& conf)
+{
     if (conf.num_threads == 0)
         conf.num_threads = std::thread::hardware_concurrency();
 
@@ -37,4 +39,7 @@ void make_integral_images(Config& conf) {
     for (const std::string& s : conf.filenames) {
         std::cout << s << std::endl;
     }
+    cv::Mat image = cv::imread(conf.filenames[0]);
+    cv::imshow("abcd", res);
+    cv::waitKey(0);
 }
