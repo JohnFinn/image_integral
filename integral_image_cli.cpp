@@ -1,3 +1,12 @@
+/** @file
+ *  @brief image integrating CLI
+ *
+ *  @b Usage
+ *  @code
+ *  ./integral_image [-i|--image] <path_to_image1> [[-i|--image] <path_to_image2> […]] [[-t|--threads] <threads number>]
+ *  @endcode
+ */
+
 #include <boost/program_options.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <opencv2/opencv.hpp>
@@ -5,30 +14,29 @@
 #include <numeric>
 #include <iostream>
 
-namespace po = boost::program_options;
 
-
+/**
+ * @brief parsed conmmand line arguments
+ */
 struct Config {
     int num_threads = 0;
     std::vector<std::string> filenames;
 };
 
 /**
-* Like main, but with arguments already parsed
-*/
+ * @brief higher lever entry function
+ *        when command line arguments parsing is handled
+ */
 void make_integral_images(Config&);
 
+
 /**
-* Usage:
-* ./integral_image [-i|--image] <path_to_image1> [[-i|--image] <path_to_image2> […]] [[-t|--threads] <threads number>]
-*     аргумент -t может быть равен 0, в этом случае необходимо автоматически выбрать количество потоков, исходя из возможностей процессора;
-*     аргумент -t может отстутствовать, в этом случае его считать равным 0;
-*     при указании некорректного количества потоков приложение должно ничего не сделать, вывести сообщение об ошибке и корректно завершиться;
-*     при указании некорректного пути, например, path_to_image2, оно не должно обрабатываться, должно быть выведено сообщение об ошибке с этим изображением, при этом результат должен быть посчитан для всех изображений с корректными путями;
-*     интегральное изображение для изображения path_to_image2 стоит записать в текстовый файл path_to_image2.integral в следующем формате: интегральное изображение для первого канала, пустая строка, интегральное изображение для второго канала, если оно есть и пустая строка и т.д. (для всех каналов);
-*/
+ * @brief parses command line arguments into Config
+ *        and calls make_integral_images()
+ */
 int main(int argc, char** argv)
 {
+    namespace po = boost::program_options;
     Config conf;
     po::options_description desc("my description");
     desc.add_options()
@@ -43,6 +51,9 @@ int main(int argc, char** argv)
     make_integral_images(conf);
 }
 
+
+/** \brief integrates image
+ */
 template<class T, int Channels>
 cv::Mat_<cv::Vec<double, Channels>> integrate(const cv::Mat_<cv::Vec<T, Channels>>& m)
 {
