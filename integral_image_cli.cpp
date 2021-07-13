@@ -26,7 +26,7 @@ struct Config {
    @brief higher lever entry function
           when command line arguments parsing is handled
  */
-void make_integral_images(Config&);
+int make_integral_images(Config&);
 
 
 /**
@@ -47,41 +47,38 @@ int main(int argc, char** argv)
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
 
-    make_integral_images(conf);
+    return make_integral_images(conf);
 }
 
-void make_integral_images(Config& conf)
+int make_integral_images(Config& conf)
 {
-    if (conf.num_threads == 0)
-        conf.num_threads = std::thread::hardware_concurrency();
-
-    std::cout << conf.num_threads << " number of threads" << std::endl
-              << "making integral images from files:" << std::endl;
-    for (const std::string& s : conf.filenames) {
-        std::cout << s << std::endl;
+    if (conf.num_threads < 0) {
+        std::cerr << "number of threads must be >= 0" << std::endl;
+        return 1;
     }
-    cv::Mat image = cv::imread(conf.filenames[0]);
-    //cv::Mat image = cv::Mat::ones(cv::Size(600, 600), CV_8U) * 2;
-    cv::Mat z = cv::Mat::zeros(image.size(), CV_32F);
-    cv::integral(image, z);
-    cv::Mat a;
-    z.convertTo(a, CV_64F, 0.0000001, 0);
-    cv::imshow("foo", a);
-    cv::waitKey(0);
-    cv::destroyWindow("foo");
+    if (conf.num_threads == 0) {
+        conf.num_threads = std::thread::hardware_concurrency();
+    }
 
-    std::cout << cv::format(image(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    std::cout << cv::format(    z(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    std::cout << cv::format(image.row(0)(cv::Range::all(), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    cv::Mat row0 = image.row(0);
-    cv::Mat integrated = cv::Mat::zeros(image.size(), CV_32SC3);
-    std::partial_sum(
-        row0.begin<cv::Vec3b>(),
-        row0.end<cv::Vec3b>(),
-        integrated.row(0).begin<cv::Vec3i>());
-    std::cout << cv::format(integrated(cv::Rect(0,0, 5,5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    std::cout << cv::format(cv::Mat3f::zeros(cv::Size(4,4)), cv::Formatter::FMT_NUMPY) << std::endl;
-    cv::Mat3b img(image);
-    cv::Mat3f m3f = integrate(img);
-    std::cout << cv::format(m3f(cv::Rect(0,0, 5,5)), cv::Formatter::FMT_NUMPY) << std::endl;
+    for (const std::string& filename : conf.filenames) {
+        cv::Mat image = cv::imread(filename);
+        cv::Mat integrated = integrate(image);
+    }
+    //cv::Mat image = cv::Mat::ones(cv::Size(600, 600), CV_8U) * 2;
+    //cv::Mat z = cv::Mat::zeros(image.size(), CV_32F);
+    //cv::integral(image, z);
+    //cv::Mat a;
+    //z.convertTo(a, CV_64F, 0.0000001, 0);
+    //cv::imshow("foo", a);
+    //cv::waitKey(0);
+    //cv::destroyWindow("foo");
+
+    //std::cout << cv::format(image(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
+    //std::cout << cv::format(    z(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
+    //cv::Mat m3f = integrate(image);
+    //std::cout << cv::format(m3f(cv::Rect(0,0, 5,5)), cv::Formatter::FMT_NUMPY) << std::endl;
+    //m3f.convertTo(m3f, CV_64F, 0.0000001, 0);
+    //cv::imshow("foo", m3f);
+    //cv::waitKey(0);
+    //cv::destroyWindow("foo");
 }

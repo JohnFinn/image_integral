@@ -4,9 +4,28 @@
  */
 
 #include <numeric>
+#include <stdexcept>
 #include <type_traits>
 #include <boost/iterator/transform_iterator.hpp>
 #include <opencv2/opencv.hpp>
+
+/**
+   @brief integrates image with unknown type
+
+   Internally calls typed version if integrate()
+   If type is not supported, throws TypeNotSupportedError
+ */
+cv::Mat integrate(const cv::Mat&);
+
+
+class TypeNotSupportedError : std::exception {
+    std::string message;
+public:
+    TypeNotSupportedError(int);
+
+    virtual const char* what() const noexcept override;
+};
+
 
 namespace detail {
 
@@ -23,7 +42,7 @@ namespace detail {
     using channel_double_t = typename channel_double<T>::type;
 }
 
-/** @brief integrates image
+/** @brief integrates image with known type
  */
 template<class T>
 inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
