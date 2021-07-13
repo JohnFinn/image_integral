@@ -26,7 +26,7 @@ namespace detail {
 /** @brief integrates image
  */
 template<class T>
-cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
+inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
 {
     using VecCd = detail::channel_double_t<T>;
     cv::Mat_<VecCd> res = cv::Mat_<VecCd>::zeros(m.size());
