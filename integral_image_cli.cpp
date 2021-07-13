@@ -9,6 +9,8 @@
 
 #include <thread>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
 #include <boost/program_options.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -50,6 +52,22 @@ int main(int argc, char** argv)
     return make_integral_images(conf);
 }
 
+/**
+   one channel version of write_channel_by_channe()
+ */
+template<class T>
+void write_channel_by_channel(const cv::Mat_<T>&, std::ostream&);
+
+/**
+   outputs matrices by channels
+   First goes table for channel 1, then for channel 2 and so on
+
+   one channel version
+ */
+template<class T, int Channels>
+void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>&, std::ostream&);
+
+
 int make_integral_images(Config& conf)
 {
     if (conf.num_threads < 0) {
@@ -62,23 +80,63 @@ int make_integral_images(Config& conf)
 
     for (const std::string& filename : conf.filenames) {
         cv::Mat image = cv::imread(filename);
-        cv::Mat integrated = integrate(image);
-    }
-    //cv::Mat image = cv::Mat::ones(cv::Size(600, 600), CV_8U) * 2;
-    //cv::Mat z = cv::Mat::zeros(image.size(), CV_32F);
-    //cv::integral(image, z);
-    //cv::Mat a;
-    //z.convertTo(a, CV_64F, 0.0000001, 0);
-    //cv::imshow("foo", a);
-    //cv::waitKey(0);
-    //cv::destroyWindow("foo");
+        if (image.empty()) {
+            std::cerr << "incorrect image: " << filename << ", skipping" << std::endl;
+            continue;
+        }
+        std::string integral_fname = filename + ".integral";
+        if (std::filesystem::exists(integral_fname)) {
+            std::cerr << integral_fname << " already exists, skipping" << std::endl;
+            continue;
+        }
+        cv::Mat result;
+        try {
+            result = integrate(image);
+        } catch (TypeNotSupportedError ex) {
+            std::cerr << "image " << filename << " has unsupported type" << std::endl;
+        }
 
-    //std::cout << cv::format(image(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    //std::cout << cv::format(    z(cv::Range(0, 5), cv::Range(0, 5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    //cv::Mat m3f = integrate(image);
-    //std::cout << cv::format(m3f(cv::Rect(0,0, 5,5)), cv::Formatter::FMT_NUMPY) << std::endl;
-    //m3f.convertTo(m3f, CV_64F, 0.0000001, 0);
-    //cv::imshow("foo", m3f);
-    //cv::waitKey(0);
-    //cv::destroyWindow("foo");
+        std::ofstream fout(integral_fname);
+        switch (result.channels())
+        {
+        case 1: write_channel_by_channel(cv::Mat1d(result), fout); break;
+        case 2: write_channel_by_channel(cv::Mat2d(result), fout); break;
+        case 3: write_channel_by_channel(cv::Mat3d(result), fout); break;
+        case 4: write_channel_by_channel(cv::Mat4d(result), fout); break;
+        default: break;
+        }
+    }
+    return 0;
+}
+
+template<class T>
+void write_channel_by_channel(const cv::Mat_<T>& m, std::ostream& out)
+{
+    for (size_t r = 0; r < m.rows; ++r) {
+        auto row = m.row(r);
+        std::copy(
+            row.begin(),
+            row.end(),
+            std::ostream_iterator<T>(out, " ")
+        );
+        out << std::endl;
+    }
+}
+
+template<class T, int Channels>
+void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>& m, std::ostream& out)
+{
+    for (int channel = 0; channel < Channels; ++channel) {
+        for (size_t r = 0; r < m.rows; ++r) {
+            auto row = m.row(r);
+            auto takeCth = [channel](const cv::Vec<T, Channels>& vec) { return vec[channel]; };
+            std::copy(
+                boost::make_transform_iterator(row.begin(), takeCth),
+                boost::make_transform_iterator(row.end(), takeCth),
+                std::ostream_iterator<T>(out, " ")
+            );
+            out << std::endl;
+        }
+        out << std::endl;
+    }
 }
