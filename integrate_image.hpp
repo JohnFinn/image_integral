@@ -1,18 +1,36 @@
 #pragma once
+/** @file
+    @brief image integration functional
+ */
 
 #include <numeric>
+#include <type_traits>
 #include <boost/iterator/transform_iterator.hpp>
 #include <opencv2/opencv.hpp>
 
+namespace detail {
 
-/** \brief integrates image
+    template<class T>
+    struct channel_double : public std::enable_if<std::is_arithmetic_v<T>, double> {};
+
+    template<class T, int Channels>
+    struct channel_double<cv::Vec<T, Channels>> { using type = cv::Vec<double, Channels>; };
+
+    /**
+       given channel type returns channel type of a same structure but with doubles
+     */
+    template<class T>
+    using channel_double_t = typename channel_double<T>::type;
+}
+
+/** @brief integrates image
  */
-template<class T, int Channels>
-cv::Mat_<cv::Vec<double, Channels>> integrate(const cv::Mat_<cv::Vec<T, Channels>>& m)
+template<class T>
+cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
 {
-    using VecCd = cv::Vec<double, Channels>;
+    using VecCd = detail::channel_double_t<T>;
     cv::Mat_<VecCd> res = cv::Mat_<VecCd>::zeros(m.size());
-    auto cvt2vecCd = [](const cv::Vec<T, Channels>& vec) { return VecCd(vec); };
+    auto cvt2vecCd = [](const T& vec) { return VecCd(vec); };
     auto row0 = m.row(0);
     std::partial_sum(
         boost::make_transform_iterator(row0.begin(), cvt2vecCd),
@@ -27,9 +45,9 @@ cv::Mat_<cv::Vec<double, Channels>> integrate(const cv::Mat_<cv::Vec<T, Channels
     );
     /**
        Here we calculating sums based on previously calculated sums.
-       When summing res(r, c-1) and res(r-1, c) we get too much since they intersect
+       When summing `res(r, c-1)` and `res(r-1, c)` we get too much since they intersect
        and that intersection is doubled.
-       But we know the sum of intersection! It's just res(r-1, c-1) so we can just subtruct it once.
+       But we know the sum of intersection! It's just `res(r-1, c-1)` so we can just subtruct it once.
        It is similar to inclusion exclusion principle by the way.
      */
     for (size_t r = 1; r < m.rows; ++r) {
