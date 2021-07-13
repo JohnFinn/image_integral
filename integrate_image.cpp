@@ -43,3 +43,16 @@ cv::Mat integrate(const cv::Mat& m)
     default: throw TypeNotSupportedError(m.type());
     }
 }
+
+void integrate_inplace(cv::Mat& m)
+{
+    m.convertTo(m, CV_64FC(m.channels()));
+    switch (m.channels())
+    {
+    case 1: { auto a = cv::Mat1d(m); return integrate_inplace<1>(a); }
+    case 2: { auto a = cv::Mat2d(m); return integrate_inplace<2>(a); }
+    case 3: { auto a = cv::Mat3d(m); return integrate_inplace<3>(a); }
+    case 4: { auto a = cv::Mat4d(m); return integrate_inplace<4>(a); }
+    default: throw TypeNotSupportedError(m.type());
+    }
+}

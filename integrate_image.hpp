@@ -76,3 +76,35 @@ inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
     }
     return res;
 }
+
+template<int Channels>
+struct get_channel_type { using type = cv::Vec<double, Channels>; };
+
+template<>
+struct get_channel_type<1> { using type = double; };
+
+template<int Channels>
+using get_channel_type_t = typename get_channel_type<Channels>::type;
+
+template<int Channels>
+inline void integrate_inplace(cv::Mat_<get_channel_type_t<Channels>>& m)
+{
+    for (size_t r = 0; r < m.rows; ++r) {
+        auto row = m.row(r);
+        std::partial_sum(
+            row.begin(),
+            row.end(),
+            row.begin()
+        );
+    }
+    for (size_t c = 0; c < m.cols; ++c) {
+        auto col = m.col(c);
+        std::partial_sum(
+            col.begin(),
+            col.end(),
+            col.begin()
+        );
+    }
+}
+
+void integrate_inplace(cv::Mat&);

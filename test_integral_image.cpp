@@ -56,6 +56,34 @@ TEST(integration, _3x2_1channel)
     EXPECT_EQ(MatWrapper(res), MatWrapper(expected));
 }
 
+TEST(inplace_integration, _3x4_2channels)
+{
+    cv::Mat mat = (cv::Mat2b(3, 4) <<
+        cv::Vec2b(1,1), cv::Vec2b(0,0), cv::Vec2b(1,0), cv::Vec2b(3,0),
+        cv::Vec2b(0,0), cv::Vec2b(4,0), cv::Vec2b(4,0), cv::Vec2b(1,0),
+        cv::Vec2b(6,0), cv::Vec2b(8,0), cv::Vec2b(4,0), cv::Vec2b(0,0));
+    cv::Mat2d expected(3, 4);
+    expected << cv::Vec2d(1,1), cv::Vec2d( 1,1), cv::Vec2d( 2,1), cv::Vec2d( 5,1),
+                cv::Vec2d(1,1), cv::Vec2d( 5,1), cv::Vec2d(10,1), cv::Vec2d(14,1),
+                cv::Vec2d(7,1), cv::Vec2d(19,1), cv::Vec2d(28,1), cv::Vec2d(32,1);
+    integrate_inplace(mat);
+    EXPECT_EQ(MatWrapper(cv::Mat_<cv::Vec2d>(mat)), MatWrapper(expected));
+}
+
+TEST(inplace_integration, _3x2_1channel)
+{
+    cv::Mat mat = (cv::Mat1b(3, 2) <<
+        0, 1,
+        2, 3,
+        4, 5);
+    cv::Mat1d expected(3, 2);
+    expected << 0,  1,
+                2,  6,
+                6, 15;
+    integrate_inplace(mat);
+    EXPECT_EQ(MatWrapper(cv::Mat_<double>(mat)), MatWrapper(expected));
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);

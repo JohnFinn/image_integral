@@ -89,6 +89,7 @@ int make_integral_images(Config& conf)
             std::cerr << integral_fname << " already exists, skipping" << std::endl;
             continue;
         }
+        image.convertTo(image, CV_64FC(image.channels()));
         cv::Mat result;
         try {
             result = integrate(image);
