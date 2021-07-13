@@ -1,10 +1,10 @@
 /** @file
- *  @brief image integrating CLI
- *
- *  @b Usage
- *  @code
- *  ./integral_image [-i|--image] <path_to_image1> [[-i|--image] <path_to_image2> […]] [[-t|--threads] <threads number>]
- *  @endcode
+    @brief image integrating CLI
+
+    @b Usage
+    @code
+    ./integral_image [-i|--image] <path_to_image1> [[-i|--image] <path_to_image2> […]] [[-t|--threads] <threads number>]
+    @endcode
  */
 
 #include <thread>
@@ -15,7 +15,7 @@
 #include "integrate_image.hpp"
 
 /**
- * @brief parsed conmmand line arguments
+   @brief parsed conmmand line arguments
  */
 struct Config {
     int num_threads = 0;
@@ -23,15 +23,15 @@ struct Config {
 };
 
 /**
- * @brief higher lever entry function
- *        when command line arguments parsing is handled
+   @brief higher lever entry function
+          when command line arguments parsing is handled
  */
 void make_integral_images(Config&);
 
 
 /**
- * @brief parses command line arguments into Config
- *        and calls make_integral_images()
+   @brief parses command line arguments into Config
+          and calls make_integral_images()
  */
 int main(int argc, char** argv)
 {

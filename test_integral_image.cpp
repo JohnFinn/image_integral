@@ -5,11 +5,11 @@
 #include "integrate_image.hpp"
 
 /**
- * @brief Wraps cv::Mat_ giving it operator==() and PrintTo() so gtest can use it.
- *
- * cv::Mat_<T>::operator==() does not check equality of objects.
- * So in order to use EXPECT_EQ and have it printing objects to stdout better
- * we need some kind of a wrapper.
+   @brief Wraps cv::Mat_ giving it operator==() and PrintTo() so gtest can use it.
+
+   cv::Mat_<T>::operator==() does not check equality of objects.
+   So in order to use EXPECT_EQ and have it printing objects to stdout better
+   we need some kind of a wrapper.
  */
 template<class T>
 class MatWrapper {
