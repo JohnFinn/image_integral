@@ -7,13 +7,12 @@
  *  @endcode
  */
 
-#include <boost/program_options.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-#include <opencv2/opencv.hpp>
 #include <thread>
-#include <numeric>
 #include <iostream>
+#include <boost/program_options.hpp>
+#include <opencv2/opencv.hpp>
 
+#include "integrate_image.hpp"
 
 /**
  * @brief parsed conmmand line arguments
@@ -50,36 +49,6 @@ int main(int argc, char** argv)
 
     make_integral_images(conf);
 }
-
-
-/** \brief integrates image
- */
-template<class T, int Channels>
-cv::Mat_<cv::Vec<double, Channels>> integrate(const cv::Mat_<cv::Vec<T, Channels>>& m)
-{
-    using VecCd = cv::Vec<double, Channels>;
-    cv::Mat_<VecCd> res = cv::Mat_<VecCd>::zeros(m.size());
-    auto cvt2vecCd = [](const cv::Vec<T, Channels>& vec) { return VecCd(vec); };
-    auto row0 = m.row(0);
-    std::partial_sum(
-        boost::make_transform_iterator(row0.begin(), cvt2vecCd),
-        boost::make_transform_iterator(row0.end(), cvt2vecCd),
-        res.row(0).begin()
-    );
-    auto col0 = m.col(0);
-    std::partial_sum(
-        boost::make_transform_iterator(col0.begin(), cvt2vecCd),
-        boost::make_transform_iterator(col0.end(), cvt2vecCd),
-        res.col(0).begin()
-    );
-    for (size_t r = 1; r < m.rows; ++r) {
-        for (size_t c = 1; c < m.cols; ++c) {
-            res(r, c) = res(r, c-1) - res(r-1, c-1) + res(r-1, c);
-        }
-    }
-    return res;
-}
-
 
 void make_integral_images(Config& conf)
 {
