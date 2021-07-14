@@ -28,29 +28,13 @@ public:
 };
 
 
-namespace detail {
-
-    template<class T>
-    struct channel_double : public std::enable_if<std::is_arithmetic_v<T>, double> {};
-
-    template<class T, int Channels>
-    struct channel_double<cv::Vec<T, Channels>> { using type = cv::Vec<double, Channels>; };
-
-    /**
-       given channel type returns channel type of a same structure but with doubles
-     */
-    template<class T>
-    using channel_double_t = typename channel_double<T>::type;
-}
-
 /** @brief integrates image with known type
  */
-template<class T>
-inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
+template<class VecCd>
+inline cv::Mat_<VecCd> integrate(const cv::Mat_<VecCd>& m)
 {
-    using VecCd = detail::channel_double_t<T>;
     cv::Mat_<VecCd> res = cv::Mat_<VecCd>::zeros(m.size());
-    auto cvt2vecCd = [](const T& vec) { return VecCd(vec); };
+    auto cvt2vecCd = [](const auto& vec) { return VecCd(vec); };
     auto row0 = m.row(0);
     std::partial_sum(
         boost::make_transform_iterator(row0.begin(), cvt2vecCd),
@@ -72,15 +56,6 @@ inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
     }
     return res;
 }
-
-template<int Channels>
-struct get_channel_type { using type = cv::Vec<double, Channels>; };
-
-template<>
-struct get_channel_type<1> { using type = double; };
-
-template<int Channels>
-using get_channel_type_t = typename get_channel_type<Channels>::type;
 
 template<class T>
 inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
