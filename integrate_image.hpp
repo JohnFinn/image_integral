@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <boost/iterator/transform_iterator.hpp>
+#include <boost/asio.hpp>
 #include <opencv2/opencv.hpp>
 
 /**
@@ -56,12 +57,6 @@ inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
         boost::make_transform_iterator(row0.end(), cvt2vecCd),
         res.row(0).begin()
     );
-    auto col0 = m.col(0);
-    std::partial_sum(
-        boost::make_transform_iterator(col0.begin(), cvt2vecCd),
-        boost::make_transform_iterator(col0.end(), cvt2vecCd),
-        res.col(0).begin()
-    );
     /**
        Here we calculating sums based on previously calculated sums.
        When summing `res(r, c-1)` and `res(r-1, c)` we get too much since they intersect
@@ -70,6 +65,7 @@ inline cv::Mat_<detail::channel_double_t<T>> integrate(const cv::Mat_<T>& m)
        It is similar to inclusion exclusion principle by the way.
      */
     for (size_t r = 1; r < m.rows; ++r) {
+        res(r, 0) = VecCd(m(r, 0)) + res(r-1, 0);
         for (size_t c = 1; c < m.cols; ++c) {
             res(r, c) = VecCd(m(r, c)) + res(r, c-1) - res(r-1, c-1) + res(r-1, c);
         }
@@ -87,7 +83,7 @@ template<int Channels>
 using get_channel_type_t = typename get_channel_type<Channels>::type;
 
 template<int Channels>
-inline void integrate_inplace(cv::Mat_<get_channel_type_t<Channels>>& m)
+inline void row_partial_sums(cv::Mat_<get_channel_type_t<Channels>>& m)
 {
     for (size_t r = 0; r < m.rows; ++r) {
         auto row = m.row(r);
@@ -97,14 +93,21 @@ inline void integrate_inplace(cv::Mat_<get_channel_type_t<Channels>>& m)
             row.begin()
         );
     }
-    for (size_t c = 0; c < m.cols; ++c) {
-        auto col = m.col(c);
-        std::partial_sum(
-            col.begin(),
-            col.end(),
-            col.begin()
-        );
+}
+
+template<int Channels>
+inline void col_partial_sums(cv::Mat_<get_channel_type_t<Channels>>& m)
+{
+    for (size_t r = 1; r < m.rows; ++r) {
+        m.row(r) += m.row(r-1);
     }
+}
+
+template<int Channels>
+inline void integrate_inplace(cv::Mat_<get_channel_type_t<Channels>>& m)
+{
+    row_partial_sums<Channels>(m);
+    col_partial_sums<Channels>(m);
 }
 
 void integrate_inplace(cv::Mat&);

@@ -89,21 +89,19 @@ int make_integral_images(Config& conf)
             std::cerr << integral_fname << " already exists, skipping" << std::endl;
             continue;
         }
-        image.convertTo(image, CV_64FC(image.channels()));
-        cv::Mat result;
         try {
-            result = integrate(image);
+            integrate_inplace(image);
         } catch (TypeNotSupportedError ex) {
             std::cerr << "image " << filename << " has unsupported type" << std::endl;
         }
 
         std::ofstream fout(integral_fname);
-        switch (result.channels())
+        switch (image.channels())
         {
-        case 1: write_channel_by_channel(cv::Mat1d(result), fout); break;
-        case 2: write_channel_by_channel(cv::Mat2d(result), fout); break;
-        case 3: write_channel_by_channel(cv::Mat3d(result), fout); break;
-        case 4: write_channel_by_channel(cv::Mat4d(result), fout); break;
+        case 1: write_channel_by_channel(cv::Mat1d(image), fout); break;
+        case 2: write_channel_by_channel(cv::Mat2d(image), fout); break;
+        case 3: write_channel_by_channel(cv::Mat3d(image), fout); break;
+        case 4: write_channel_by_channel(cv::Mat4d(image), fout); break;
         default: break;
         }
     }
