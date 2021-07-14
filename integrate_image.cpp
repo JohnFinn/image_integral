@@ -44,15 +44,15 @@ cv::Mat integrate(const cv::Mat& m)
     }
 }
 
-void integrate_inplace(cv::Mat& m)
+void integrate_inplace(cv::Mat& m, unsigned threads)
 {
     m.convertTo(m, CV_64FC(m.channels()));
     switch (m.channels())
     {
-    case 1: { auto a = cv::Mat1d(m); return integrate_inplace(a); }
-    case 2: { auto a = cv::Mat2d(m); return integrate_inplace(a); }
-    case 3: { auto a = cv::Mat3d(m); return integrate_inplace(a); }
-    case 4: { auto a = cv::Mat4d(m); return integrate_inplace(a); }
+    case 1: { auto a = cv::Mat1d(m); return integrate_inplace(a, threads); }
+    case 2: { auto a = cv::Mat2d(m); return integrate_inplace(a, threads); }
+    case 3: { auto a = cv::Mat3d(m); return integrate_inplace(a, threads); }
+    case 4: { auto a = cv::Mat4d(m); return integrate_inplace(a, threads); }
     default: throw TypeNotSupportedError(m.type());
     }
 }

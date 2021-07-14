@@ -84,6 +84,19 @@ TEST(inplace_integration, _3x2_1channel)
     EXPECT_EQ(MatWrapper(cv::Mat_<double>(mat)), MatWrapper(expected));
 }
 
+TEST(inplace_integration, _big_ones_threads)
+{
+    cv::Mat1d mat = cv::Mat1d::ones(1000, 1000);
+    cv::Mat1d expected(1000, 1000);
+    for (size_t r = 0; r < expected.rows; ++r) {
+        for (size_t c = 0; c < expected.cols; ++c) {
+            expected(r, c) = (r + 1) * (c + 1);
+        }
+    }
+    integrate_inplace(mat, 9);
+    EXPECT_EQ(MatWrapper(cv::Mat_<double>(mat)), MatWrapper(expected));
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);

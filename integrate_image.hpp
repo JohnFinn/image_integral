@@ -151,4 +151,4 @@ inline void integrate_inplace(cv::Mat_<T>& m, unsigned threads = 1)
     col_partial_sums(m, threads);
 }
 
-void integrate_inplace(cv::Mat&);
+void integrate_inplace(cv::Mat&, unsigned threads = 1);
