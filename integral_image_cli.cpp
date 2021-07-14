@@ -128,11 +128,11 @@ void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>& m, std::ostr
     for (int channel = 0; channel < Channels; ++channel) {
         for (size_t r = 0; r < m.rows; ++r) {
             auto row = m.row(r);
-            auto takeCth = [channel](const cv::Vec<T, Channels>& vec) { return vec[channel]; };
-            std::copy(
-                boost::make_transform_iterator(row.begin(), takeCth),
-                boost::make_transform_iterator(row.end(), takeCth),
-                std::ostream_iterator<T>(out, " ")
+            std::transform(
+                row.begin(),
+                row.end(),
+                std::ostream_iterator<T>(out, " "),
+                [channel](const cv::Vec<T, Channels>& vec) { return vec[channel]; }
             );
             out << std::endl;
         }
