@@ -83,15 +83,33 @@ template<int Channels>
 using get_channel_type_t = typename get_channel_type<Channels>::type;
 
 template<class T>
-inline void row_partial_sums(cv::Mat_<T>& m)
+inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
 {
-    for (size_t r = 0; r < m.rows; ++r) {
-        auto row = m.row(r);
-        std::partial_sum(
-            row.begin(),
-            row.end(),
-            row.begin()
-        );
+    if (threads == 0) {
+        throw std::logic_error("zero threads won't do any good");
+    }
+    if (threads == 1) {
+        for (size_t r = 0; r < m.rows; ++r) {
+            auto row = m.row(r);
+            std::partial_sum(
+                row.begin(),
+                row.end(),
+                row.begin()
+            );
+        }
+    } else {
+        boost::asio::thread_pool pool(threads);
+        for (size_t r = 0; r < m.rows; ++r) {
+            boost::asio::post(pool, [&m,r]() {
+                auto row = m.row(r);
+                std::partial_sum(
+                    row.begin(),
+                    row.end(),
+                    row.begin()
+                );
+            });
+        }
+        pool.join();
     }
 }
 
@@ -104,10 +122,33 @@ inline void col_partial_sums(cv::Mat_<T>& m)
 }
 
 template<class T>
-inline void integrate_inplace(cv::Mat_<T>& m)
+inline void col_partial_sums(cv::Mat_<T>& m, unsigned threads)
 {
-    row_partial_sums(m);
-    col_partial_sums(m);
+    if (threads == 0) {
+        throw std::logic_error("zero threads won't do any good");
+    }
+    boost::asio::thread_pool pool(threads);
+    size_t step = m.cols / threads;
+    cv::Range interval(0, step + m.cols % threads);
+    cv::Range first = interval;
+    for (unsigned t = 1; t < threads; ++t) {
+        interval = cv::Range(interval.end, interval.end + step);
+        boost::asio::post(pool, [&m,interval]() {
+            cv::Mat_<T> columns(m.colRange(interval));
+            col_partial_sums(columns);
+        });
+    }
+    cv::Mat_<T> columns(m.colRange(first));
+    col_partial_sums(columns);
+
+    pool.join();
+}
+
+template<class T>
+inline void integrate_inplace(cv::Mat_<T>& m, unsigned threads = 1)
+{
+    row_partial_sums(m, threads);
+    col_partial_sums(m, threads);
 }
 
 void integrate_inplace(cv::Mat&);

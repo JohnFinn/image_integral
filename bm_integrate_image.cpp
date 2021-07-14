@@ -10,18 +10,15 @@ static void BM_integrate(benchmark::State& state)
     }
 }
 
+template<unsigned Threads>
 static void BM_integrate_inplace(benchmark::State& state)
 {
     cv::Mat3d m(1000, 1000);
-    cv::randu(m, -1000.0, 1000.0);
-    std::vector<cv::Mat3d> vec;
-    for (size_t i = 0; i < 200; ++i)
-        vec.push_back(m.clone());
-
-    size_t i = 0;
     for (auto _ : state) {
-        integrate_inplace(vec[i]);
-        ++i;
+        state.PauseTiming();
+        cv::randu(m, -1000, 1000);
+        state.ResumeTiming();
+        integrate_inplace(m, Threads);
     }
 }
 
@@ -35,30 +32,39 @@ static void BM_opencv_integrate(benchmark::State& state)
     }
 }
 
+template<unsigned Threads>
 static void BM_row_partial_sums(benchmark::State& state)
 {
     cv::Mat3d m(1000, 1000);
     cv::randu(m, -1000.0, 1000.0);
     for (auto _ : state) {
         cv::Mat res;
-        row_partial_sums(m);
+        row_partial_sums(m, Threads);
     }
 }
 
+template<unsigned Threads>
 static void BM_col_partial_sums(benchmark::State& state)
 {
     cv::Mat3d m(1000, 1000);
     cv::randu(m, -1000.0, 1000.0);
     for (auto _ : state) {
         cv::Mat res;
-        row_partial_sums(m);
+        col_partial_sums(m, Threads);
     }
 }
 
+
+BENCHMARK_TEMPLATE1(BM_integrate_inplace, 1);
+BENCHMARK_TEMPLATE1(BM_integrate_inplace, 2);
+BENCHMARK_TEMPLATE1(BM_integrate_inplace, 3);
 BENCHMARK(BM_integrate);
 BENCHMARK(BM_opencv_integrate);
-BENCHMARK(BM_row_partial_sums);
-BENCHMARK(BM_col_partial_sums);
-BENCHMARK(BM_integrate_inplace);
+BENCHMARK_TEMPLATE1(BM_row_partial_sums, 1);
+BENCHMARK_TEMPLATE1(BM_row_partial_sums, 2);
+BENCHMARK_TEMPLATE1(BM_row_partial_sums, 3);
+BENCHMARK_TEMPLATE1(BM_col_partial_sums, 1);
+BENCHMARK_TEMPLATE1(BM_col_partial_sums, 2);
+BENCHMARK_TEMPLATE1(BM_col_partial_sums, 3);
 
 BENCHMARK_MAIN();
