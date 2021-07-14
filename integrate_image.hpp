@@ -82,8 +82,8 @@ struct get_channel_type<1> { using type = double; };
 template<int Channels>
 using get_channel_type_t = typename get_channel_type<Channels>::type;
 
-template<int Channels>
-inline void row_partial_sums(cv::Mat_<get_channel_type_t<Channels>>& m)
+template<class T>
+inline void row_partial_sums(cv::Mat_<T>& m)
 {
     for (size_t r = 0; r < m.rows; ++r) {
         auto row = m.row(r);
@@ -95,19 +95,19 @@ inline void row_partial_sums(cv::Mat_<get_channel_type_t<Channels>>& m)
     }
 }
 
-template<int Channels>
-inline void col_partial_sums(cv::Mat_<get_channel_type_t<Channels>>& m)
+template<class T>
+inline void col_partial_sums(cv::Mat_<T>& m)
 {
     for (size_t r = 1; r < m.rows; ++r) {
         m.row(r) += m.row(r-1);
     }
 }
 
-template<int Channels>
-inline void integrate_inplace(cv::Mat_<get_channel_type_t<Channels>>& m)
+template<class T>
+inline void integrate_inplace(cv::Mat_<T>& m)
 {
-    row_partial_sums<Channels>(m);
-    col_partial_sums<Channels>(m);
+    row_partial_sums(m);
+    col_partial_sums(m);
 }
 
 void integrate_inplace(cv::Mat&);
