@@ -79,7 +79,7 @@ int make_integral_images(Config& conf)
     }
 
     for (const std::string& filename : conf.filenames) {
-        cv::Mat image = cv::imread(filename);
+        cv::Mat image = cv::imread(filename, cv::IMREAD_UNCHANGED);
         if (image.empty()) {
             std::cerr << "incorrect image: " << filename << ", skipping" << std::endl;
             continue;
@@ -90,7 +90,7 @@ int make_integral_images(Config& conf)
             continue;
         }
         try {
-            integrate_inplace(image);
+            integrate_inplace(image, conf.num_threads);
         } catch (TypeNotSupportedError ex) {
             std::cerr << "image " << filename << " has unsupported type" << std::endl;
         }
@@ -113,12 +113,16 @@ void write_channel_by_channel(const cv::Mat_<T>& m, std::ostream& out)
 {
     for (size_t r = 0; r < m.rows; ++r) {
         auto row = m.row(r);
+        auto last = std::prev(row.end());
         std::copy(
             row.begin(),
-            row.end(),
+            last,
             std::ostream_iterator<T>(out, " ")
         );
-        out << std::endl;
+        out << *last;
+        if (r < m.rows - 1) {
+            out << '\n';
+        }
     }
 }
 
@@ -128,14 +132,20 @@ void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>& m, std::ostr
     for (int channel = 0; channel < Channels; ++channel) {
         for (size_t r = 0; r < m.rows; ++r) {
             auto row = m.row(r);
+            auto last = std::prev(row.end());
             std::transform(
                 row.begin(),
-                row.end(),
+                last,
                 std::ostream_iterator<T>(out, " "),
                 [channel](const cv::Vec<T, Channels>& vec) { return vec[channel]; }
             );
-            out << std::endl;
+            out << (*last)[channel];
+            if (r < m.rows - 1) {
+                out << '\n';
+            }
         }
-        out << std::endl;
+        if (channel < Channels - 1) {
+            out << "\n\n";
+        }
     }
 }
