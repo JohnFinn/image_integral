@@ -8,7 +8,6 @@
  */
 
 #include <thread>
-#include <iostream>
 #include <fstream>
 #include <filesystem>
 #include <boost/program_options.hpp>
