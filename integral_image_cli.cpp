@@ -61,8 +61,6 @@ void write_channel_by_channel(const cv::Mat_<T>&, std::ostream&);
 /**
    outputs matrices by channels
    First goes table for channel 1, then for channel 2 and so on
-
-   one channel version
  */
 template<class T, int Channels>
 void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>&, std::ostream&);
