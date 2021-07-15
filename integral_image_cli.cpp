@@ -53,7 +53,6 @@ int main(int argc, char** argv)
     Config conf;
     po::options_description desc("my description");
     desc.add_options()
-        ("help,h", "produce help message")
         ("image,i", po::value<std::vector<std::string>>(&conf.filenames), "input image")
         ("threads,t", po::value<int>(&conf.num_threads)->default_value(0), "number of threads")
     ;
