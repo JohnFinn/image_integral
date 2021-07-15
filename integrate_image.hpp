@@ -13,10 +13,18 @@
 /**
    @brief integrates image with unknown type
 
-   Internally calls typed version if integrate()
+   Internally calls typed version of integrate()
    If type is not supported, throws TypeNotSupportedError
  */
 cv::Mat integrate(const cv::Mat&);
+
+/**
+   @brief integrates image inplace
+
+   Internally calls typed version of integrate_inplace()
+   If type is not supported, throws TypeNotSupportedError
+ */
+void integrate_inplace(cv::Mat&, unsigned threads = 1);
 
 
 class TypeNotSupportedError : std::exception {
@@ -28,7 +36,11 @@ public:
 };
 
 
-/** @brief integrates image with known type
+/**
+   @brief integrates image with known type
+
+   integrate_inplace() turned out to be more effecient and easier in parralelization
+   the reason I left this one is to compare performance
  */
 template<class VecCd>
 inline cv::Mat_<VecCd> integrate(const cv::Mat_<VecCd>& m)
@@ -57,6 +69,9 @@ inline cv::Mat_<VecCd> integrate(const cv::Mat_<VecCd>& m)
     return res;
 }
 
+/**
+   @brief calculates partial sums for each row
+ */
 template<class T>
 inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
 {
@@ -73,6 +88,10 @@ inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
             );
         }
     } else {
+        /*
+           Note that iterations in the loop above are independent from each other.
+           This makes is easy to parallelize them.
+        */
         boost::asio::thread_pool pool(threads);
         for (size_t r = 0; r < m.rows; ++r) {
             boost::asio::post(pool, [&m,r]() {
@@ -88,6 +107,16 @@ inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
     }
 }
 
+/**
+   @brief calculates partial sums for each column
+
+   The reason this function is implemented not the same way as
+   row_partial_sums (except changing row to col of course)
+   is because that benchmark showed that this is more efficent.
+
+   Probably this has something to do with the fact that cache is faster
+   when working with continuous memory.
+ */
 template<class T>
 inline void col_partial_sums(cv::Mat_<T>& m)
 {
@@ -96,12 +125,26 @@ inline void col_partial_sums(cv::Mat_<T>& m)
     }
 }
 
+/**
+   @brief multithreaded version of col_partial_sums()
+ */
 template<class T>
 inline void col_partial_sums(cv::Mat_<T>& m, unsigned threads)
 {
     if (threads == 0) {
         throw std::logic_error("zero threads won't do any good");
     }
+    /*
+        each thread gets its range of columns, like in picture below
+
+        +----+----+----+
+        | T0 | T1 | T2 |
+        |    |    |    |
+              ....
+
+        this makes calculations independent from each other, so there is
+        no need for syncronization
+    */
     boost::asio::thread_pool pool(threads);
     size_t step = m.cols / threads;
     cv::Range interval(0, step + m.cols % threads);
@@ -119,11 +162,25 @@ inline void col_partial_sums(cv::Mat_<T>& m, unsigned threads)
     pool.join();
 }
 
+/**
+   @brief integrates image inplace
+ */
 template<class T>
 inline void integrate_inplace(cv::Mat_<T>& m, unsigned threads = 1)
 {
+    /*
+        row_partial_sums gives us:
+
+        m(R, C) =  Sum[  m(r, C) ]
+                  r <= R
+
+        then col_partial_sums gives us:
+
+        m(R, C) = Sum[    Sum[  m(r, c) ] ]
+                c <= C  r <= R
+
+        When opening brackets we get exactly integral. This is why it works.
+    */
     row_partial_sums(m, threads);
     col_partial_sums(m, threads);
 }
-
-void integrate_inplace(cv::Mat&, unsigned threads = 1);

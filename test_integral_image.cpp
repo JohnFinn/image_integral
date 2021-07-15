@@ -88,6 +88,9 @@ TEST(inplace_integration, _big_ones_threads)
 {
     cv::Mat1d mat = cv::Mat1d::ones(1000, 1000);
     cv::Mat1d expected(1000, 1000);
+    /**
+       since we have matrix of ones, the integrated value for each pixel is just the area of the rectangle
+      */
     for (size_t r = 0; r < expected.rows; ++r) {
         for (size_t c = 0; c < expected.cols; ++c) {
             expected(r, c) = (r + 1) * (c + 1);

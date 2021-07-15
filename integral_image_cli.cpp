@@ -5,6 +5,11 @@
     @code
     ./integral_image [-i|--image] <path_to_image1> [[-i|--image] <path_to_image2> […]] [[-t|--threads] <threads number>]
     @endcode
+
+    outputs results to the text files names `<path_to_image_i>.integral`
+    if `.integral` file already exists assumes calculation is already done and skips it.
+
+    the output is written `C` tables of numbers, where `C` is number of channels
  */
 
 #include <thread>
