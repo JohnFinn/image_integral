@@ -30,6 +30,18 @@ struct Config {
  */
 int make_integral_images(Config&);
 
+/**
+   one channel version of write_channel_by_channe()
+ */
+template<class T>
+void write_channel_by_channel(const cv::Mat_<T>&, std::ostream&);
+
+/**
+   outputs matrices by channels
+   First goes table for channel 1, then for channel 2 and so on
+ */
+template<class T, int Channels>
+void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>&, std::ostream&);
 
 /**
    @brief parses command line arguments into Config
@@ -51,20 +63,6 @@ int main(int argc, char** argv)
 
     return make_integral_images(conf);
 }
-
-/**
-   one channel version of write_channel_by_channe()
- */
-template<class T>
-void write_channel_by_channel(const cv::Mat_<T>&, std::ostream&);
-
-/**
-   outputs matrices by channels
-   First goes table for channel 1, then for channel 2 and so on
- */
-template<class T, int Channels>
-void write_channel_by_channel(const cv::Mat_<cv::Vec<T, Channels>>&, std::ostream&);
-
 
 int make_integral_images(Config& conf)
 {
