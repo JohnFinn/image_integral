@@ -61,9 +61,9 @@ inline cv::Mat_<VecCd> integrate(const cv::Mat_<VecCd>& m)
        It is similar to inclusion exclusion principle by the way.
      */
     for (size_t r = 1; r < m.rows; ++r) {
-        res(r, 0) = VecCd(m(r, 0)) + res(r-1, 0);
+        res(r, 0) = m(r, 0) + res(r-1, 0);
         for (size_t c = 1; c < m.cols; ++c) {
-            res(r, c) = VecCd(m(r, c)) + res(r, c-1) - res(r-1, c-1) + res(r-1, c);
+            res(r, c) = m(r, c) + res(r, c-1) - res(r-1, c-1) + res(r-1, c);
         }
     }
     return res;
