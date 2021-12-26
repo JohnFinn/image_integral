@@ -69,6 +69,10 @@ inline cv::Mat_<VecCd> integrate(const cv::Mat_<VecCd>& m)
     return res;
 }
 
+void partial_sum(cv::Mat_<T> row) {
+    std::partial_sum(row.begin(), row.end(), row.begin());
+}
+
 /**
    @brief calculates partial sums for each row
  */
@@ -80,12 +84,7 @@ inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
     }
     if (threads == 1) {
         for (size_t r = 0; r < m.rows; ++r) {
-            auto row = m.row(r);
-            std::partial_sum(
-                row.begin(),
-                row.end(),
-                row.begin()
-            );
+            partial_sum(m.row(r));
         }
     } else {
         /*
@@ -95,12 +94,7 @@ inline void row_partial_sums(cv::Mat_<T>& m, unsigned threads = 1)
         boost::asio::thread_pool pool(threads);
         for (size_t r = 0; r < m.rows; ++r) {
             boost::asio::post(pool, [&m,r]() {
-                auto row = m.row(r);
-                std::partial_sum(
-                    row.begin(),
-                    row.end(),
-                    row.begin()
-                );
+                partial_sum(m.row(r));
             });
         }
         pool.join();
